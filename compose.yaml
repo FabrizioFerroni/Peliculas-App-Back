@@ -1,0 +1,6 @@
+﻿services:
+  peliculasapp-back:
+    image: peliculasapp-back
+    build:
+      context: .
+      dockerfile: PeliculasApp-Back/Dockerfile
