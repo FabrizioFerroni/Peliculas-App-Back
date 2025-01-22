@@ -1,3 +1,6 @@
+using PeliculasApp_Back.Repositorios;
+using PeliculasApp_Back.Repositorios.Interfaces;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -11,8 +14,10 @@ var services = builder.Services;
 
 services.AddOutputCache(opt =>
 {
-    opt.DefaultExpirationTimeSpan = TimeSpan.FromSeconds(15);
+    opt.DefaultExpirationTimeSpan = TimeSpan.FromSeconds(60);
 });
+
+services.AddSingleton<IRepositorioEnMemoria, RepositorioEnMemoria>();
 
 var app = builder.Build();
 

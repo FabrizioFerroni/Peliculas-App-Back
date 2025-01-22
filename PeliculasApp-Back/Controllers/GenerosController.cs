@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using PeliculasApp_Back.Entidades;
-using PeliculasApp_Back.Repositorio;
+using PeliculasApp_Back.Repositorios.Interfaces;
+
 
 namespace PeliculasApp_Back.Controllers;
 
@@ -9,23 +10,30 @@ namespace PeliculasApp_Back.Controllers;
 [Route("api/generos")]
 public class GenerosController : ControllerBase
 {
-    
+    private readonly IRepositorioEnMemoria _repositorio;
+    private readonly IOutputCacheStore _cacheStore;
+    private const string CacheKey = "Generos";
+
+    public GenerosController(IRepositorioEnMemoria repositorio, IOutputCacheStore cacheStore)
+    {
+        _repositorio = repositorio;
+        _cacheStore = cacheStore;
+    }
     
     [HttpGet]
+    [OutputCache(Tags = [CacheKey])]
     public IActionResult GetGeneros()
     {
-        RepositorioEnMemoria repository = new RepositorioEnMemoria();
-        List<Genero> generos = repository.ObtenerTodosLosGeneros();
+        List<Genero> generos = _repositorio.ObtenerTodosLosGeneros();
         
         return Ok(generos);
     }
 
     [HttpGet("{id}")]
-    [OutputCache]
+    [OutputCache(Tags = [CacheKey])]
     public async Task<ActionResult<Genero>> GetGenero(Guid id)
     {
-        RepositorioEnMemoria repository = new RepositorioEnMemoria();
-        Genero? genero = await repository.ObtenerGeneroPorId((Guid) id);
+        Genero? genero = await _repositorio.ObtenerGeneroPorId((Guid) id);
         
         if (genero == null)
         {
@@ -36,10 +44,17 @@ public class GenerosController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Post([FromBody] Genero genero)
+    public async Task<IActionResult> Post([FromBody] Genero genero)
     {
-        RepositorioEnMemoria repository = new RepositorioEnMemoria();
-        repository.AgregarGenero(genero);
+        bool existe = _repositorio.Existe(genero.Nombre);
+
+        if (existe)
+        {
+            return Conflict("Genero ya existe");
+        }
+        
+        _repositorio.AgregarGenero(genero);
+        await _cacheStore.EvictByTagAsync(CacheKey, default);
         
         return Created("", genero);
     }
