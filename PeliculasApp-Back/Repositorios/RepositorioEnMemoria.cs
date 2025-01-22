@@ -1,8 +1,9 @@
 using PeliculasApp_Back.Entidades;
+using PeliculasApp_Back.Repositorios.Interfaces;
 
-namespace PeliculasApp_Back.Repositorio;
+namespace PeliculasApp_Back.Repositorios;
 
-public class RepositorioEnMemoria
+public class RepositorioEnMemoria : IRepositorioEnMemoria
 {
     private List<Genero> generos = new List<Genero>();
 
@@ -42,5 +43,10 @@ public class RepositorioEnMemoria
     public void AgregarGenero(Genero genero)
     {
         generos.Add(genero);
+    }
+
+    public bool Existe(string nombre)
+    {
+        return generos.Any(g => g.Nombre == nombre);
     }
 }
