@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using NetTopologySuite.Geometries;
 using PeliculasApp_Back.Dtos;
 using PeliculasApp_Back.Entidades;
@@ -9,10 +10,20 @@ public class AutoMapperProfiles: Profile
 {
     public AutoMapperProfiles(GeometryFactory geometryFactory)
     {
+        ConfigurarMapeoUsuarios();
         ConfigurarMapeoGeneros();
         ConfigurarMapeActores();
         ConfigurarMapeoCines(geometryFactory);
         ConfigurarMapeoPeliculas();
+    }
+
+    private void ConfigurarMapeoUsuarios()
+    {
+        // CreateMap<IdentityUser, UsuarioDTO>();
+        CreateMap<IdentityUser<Guid>, UsuarioDTO>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+            .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.UserName));
     }
 
     private void ConfigurarMapeoGeneros()

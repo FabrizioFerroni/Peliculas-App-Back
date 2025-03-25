@@ -1,5 +1,7 @@
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +18,7 @@ namespace PeliculasApp_Back.Controllers;
 
 [ApiController]
 [Route("api/peliculas")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "esadmin")]
 public class PeliculasController : CustomBaseController
 {
     private readonly IOutputCacheStore _cacheStore;
@@ -24,14 +27,16 @@ public class PeliculasController : CustomBaseController
     private readonly ApplicationDbContext _context; //borrar luego
     private readonly IMapper _mapper;
     private readonly IAlmacenadorArchivos _almacenadorArchivos;
+    private readonly IServicioUsuarios _userService;
 
     public PeliculasController(IOutputCacheStore cacheStore, ApplicationDbContext context, IMapper mapper,
-        IAlmacenadorArchivos almacenadorArchivos) : base(context, mapper)
+        IAlmacenadorArchivos almacenadorArchivos, IServicioUsuarios userService) : base(context, mapper)
     {
         _cacheStore = cacheStore;
         _context = context;
         _mapper = mapper;
         _almacenadorArchivos = almacenadorArchivos;
+        _userService = userService;
     }
 
     [HttpGet("nuevo/cine-generos")]
@@ -59,6 +64,7 @@ public class PeliculasController : CustomBaseController
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
+    [AllowAnonymous]
     public async Task<ActionResult<Pageable<List<PeliculaDto>>>> Filtrar([FromQuery] PeliculaFiltrarDto dto)
     {
         IQueryable<Pelicula>? peliculasQueryable = _context.Peliculas.AsQueryable();
@@ -114,6 +120,7 @@ public class PeliculasController : CustomBaseController
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
+    [AllowAnonymous]
     public async Task<ActionResult<LandingPageDto>> GetLanding()
     {
         int top = 6;
@@ -145,6 +152,7 @@ public class PeliculasController : CustomBaseController
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]
+    [AllowAnonymous]
     public async Task<ActionResult<PeliculaDetallesDto>> GetPeliculaBySlug(string slug)
     {
         PeliculaDetallesDto? pelicula = await _context.Peliculas.ProjectTo<PeliculaDetallesDto>(_mapper.ConfigurationProvider).Where(e => e.Slug!.Contains(slug)).FirstOrDefaultAsync();
@@ -153,6 +161,29 @@ public class PeliculasController : CustomBaseController
         {
             return NotFound(new { Mensaje = "Pelicula no encontrada con ese slug"});
         }
+
+        double promedioVoto = 0.0;
+        int usuarioVoto = 0;
+
+        if (await _context.RatingsPeliculas.AnyAsync(r => r.PeliculaId == pelicula.Id))
+        {
+            promedioVoto = await _context.RatingsPeliculas.Where(r => r.PeliculaId == pelicula.Id).AverageAsync(r => r.Puntuacion);
+            
+            if (HttpContext.User.Identity!.IsAuthenticated)
+            {
+                Guid userId = await _userService.ObtenerUsuario();
+                
+                Rating? ratingDB = await _context.RatingsPeliculas.FirstOrDefaultAsync(r =>  r.UsuarioId == userId && r.PeliculaId == pelicula.Id);
+
+                if (ratingDB is not null)
+                {
+                    usuarioVoto = ratingDB.Puntuacion;
+                }
+            }
+        }
+
+        pelicula.PromedioVoto = promedioVoto;
+        pelicula.VotoUsuario = usuarioVoto;
         
         return Ok(pelicula);
     }
@@ -194,7 +225,6 @@ public class PeliculasController : CustomBaseController
 
     
     [HttpGet("p/{id}")]
-    [OutputCache(Tags = [CacheKey])]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]

@@ -17,4 +17,6 @@ public class PeliculaDto : IId
     public bool EnCines { get; set; }
     public bool ProximoEstreno { get; set; }
     public string Director { get; set; } = string.Empty;
+    public double PromedioVoto  { get; set; }
+    public int VotoUsuario { get; set; }
 }

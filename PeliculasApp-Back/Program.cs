@@ -1,5 +1,8 @@
+using System.Text;
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
 using PeliculasApp_Back.Data;
@@ -23,6 +26,7 @@ services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
 services.AddSingleton<GeometryFactory>(NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
 
 services.AddHttpContextAccessor();
+services.AddTransient<IServicioUsuarios, ServicioUsuarios>();
 
 // services.AddAutoMapper(typeof(Program));
 
@@ -33,6 +37,30 @@ services.AddSingleton(prov =>
         conf.AddProfile(new AutoMapperProfiles(geometryFactory));
     }).CreateMapper()
 );
+
+services.AddIdentityCore<IdentityUser<Guid>>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
+
+services.AddScoped<UserManager<IdentityUser<Guid>>>();
+services.AddScoped<SignInManager<IdentityUser<Guid>>>();
+
+services.AddAuthentication().AddJwtBearer(opt =>
+{
+    opt.MapInboundClaims = false;
+    opt.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]!)),
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+services.AddAuthorization(opciones =>
+{
+    opciones.AddPolicy("esadmin", policy => policy.RequireClaim("esadmin"));
+});
 
 string connectionString = builder.Configuration.GetConnectionString("SQLServerDB")!;
 
