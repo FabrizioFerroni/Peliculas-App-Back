@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using PeliculasApp_Back.Data;
@@ -12,9 +13,11 @@ using PeliculasApp_Back.Data;
 namespace PeliculasApp_Back.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250323014534_UserTable")]
+    partial class UserTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -427,36 +430,6 @@ namespace PeliculasApp_Back.Migrations
                     b.ToTable("PeliculaGeneros");
                 });
 
-            modelBuilder.Entity("PeliculasApp_Back.Entidades.Rating", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaModificacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("PeliculaId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Puntuacion")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("UsuarioId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PeliculaId");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("RatingsPeliculas");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
@@ -563,25 +536,6 @@ namespace PeliculasApp_Back.Migrations
                     b.Navigation("Genero");
 
                     b.Navigation("Pelicula");
-                });
-
-            modelBuilder.Entity("PeliculasApp_Back.Entidades.Rating", b =>
-                {
-                    b.HasOne("PeliculasApp_Back.Entidades.Pelicula", "Pelicula")
-                        .WithMany()
-                        .HasForeignKey("PeliculaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser<System.Guid>", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Pelicula");
-
-                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("PeliculasApp_Back.Entidades.Pelicula", b =>

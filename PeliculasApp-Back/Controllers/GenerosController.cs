@@ -1,4 +1,6 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +15,7 @@ namespace PeliculasApp_Back.Controllers;
 
 [ApiController]
 [Route("api/generos")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "esadmin")]
 public class GenerosController : CustomBaseController
 {
     private readonly IOutputCacheStore _cacheStore;
@@ -42,6 +45,7 @@ public class GenerosController : CustomBaseController
     [OutputCache(Tags = [CacheKey])]
     [ProducesResponseType(200)]
     [ProducesResponseType(500)]
+    [AllowAnonymous]
     public async Task<ActionResult<List<GeneroDto>>> GetAllGeneros()
     {
         List<GeneroDto> response = await GetAllAsync<Genero, GeneroDto>(ordenarPor: g => g.Nombre);

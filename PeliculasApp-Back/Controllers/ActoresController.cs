@@ -1,5 +1,7 @@
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +17,7 @@ namespace PeliculasApp_Back.Controllers;
 
 [ApiController]
 [Route("api/actores")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "esadmin")]
 public class ActoresController : CustomBaseController
 {
     private readonly IOutputCacheStore _cacheStore;
